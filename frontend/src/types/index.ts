@@ -40,6 +40,11 @@ export interface FeedItem {
   completedAt: string;
   user: {
     username: string;
+    isFollowing?: boolean;
+    _count?: {
+        followers: number;
+        following: number;
+    };
   };
   habit: {
     name: string;
@@ -47,4 +52,19 @@ export interface FeedItem {
     icon?: string;
     color?: string;
   };
+}
+
+export interface DashboardStats {
+  activeHabits: number;
+  topHabit: {
+    name: string;
+    streak: number;
+    icon?: string;
+  };
+  weeklyActivity: {
+    label: string;
+    value: number;
+  }[];
+  scoreChange: number;
+  totalCompletions: number;
 }

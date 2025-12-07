@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
+import { motion } from 'framer-motion';
 import { Search, Users, Activity } from 'lucide-react';
 import api from '../services/api';
 import UserCard from '../components/UserCard';
@@ -74,7 +75,12 @@ const Social = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="min-h-screen bg-gray-50"
+    >
       <Navbar />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -155,7 +161,7 @@ const Social = () => {
           </Tabs.Content>
         </Tabs.Root>
       </main>
-    </div>
+    </motion.div>
   );
 };
 

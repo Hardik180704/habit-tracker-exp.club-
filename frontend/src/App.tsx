@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -9,29 +9,34 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Social from './pages/Social';
 
+import ErrorBoundary from './components/ErrorBoundary';
+import NotFound from './pages/NotFound';
+
 function App() {
   return (
-    <AuthProvider>
-      <Toaster position="top-right" />
-      <Routes>
-        {/* Public Routes (Login/Register) */}
-        <Route element={<PublicRoute />}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Route>
-
-        {/* Protected Routes (Dashboard, etc.) */}
-        <Route element={<PrivateRoute />}>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/social" element={<Social />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <Toaster position="top-right" />
+        <Routes>
+          {/* Public Routes (Login/Register) */}
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
           </Route>
-        </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AuthProvider>
+          {/* Protected Routes (Dashboard, etc.) */}
+          <Route element={<PrivateRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/social" element={<Social />} />
+            </Route>
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
