@@ -2,6 +2,10 @@ export interface User {
   id: number;
   username: string;
   email: string;
+  _count?: {
+    followers: number;
+    following: number;
+  };
 }
 
 export interface Habit {
@@ -23,4 +27,24 @@ export interface Completion {
   id: number;
   habitId: number;
   date: string;
+}
+
+export interface SocialUser {
+  id: number;
+  username: string;
+  isFollowing: boolean;
+}
+
+export interface FeedItem {
+  id: number;
+  completedAt: string;
+  user: {
+    username: string;
+  };
+  habit: {
+    name: string;
+    category: string;
+    icon?: string;
+    color?: string;
+  };
 }

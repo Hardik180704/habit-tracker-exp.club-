@@ -154,3 +154,58 @@ export const getFeed = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch feed' });
   }
 };
+
+export const getFollowers = async (req, res) => {
+  try {
+    const followers = await prisma.follow.findMany({
+      where: { followingId: req.userId },
+      include: {
+        follower: {
+          select: { id: true, username: true }
+        }
+      }
+    });
+    
+    // Check if I follow them back
+    const myFollowing = await prisma.follow.findMany({
+      where: { followerId: req.userId },
+      select: { followingId: true }
+    });
+    const myFollowingSet = new Set(myFollowing.map(f => f.followingId));
+
+    const formatted = followers.map(f => ({
+      id: f.follower.id,
+      username: f.follower.username,
+      isFollowing: myFollowingSet.has(f.follower.id)
+    }));
+    
+    res.json({ users: formatted });
+  } catch (error) {
+    console.error('Get followers error:', error);
+    res.status(500).json({ error: 'Failed to fetch followers' });
+  }
+};
+
+export const getFollowing = async (req, res) => {
+  try {
+    const following = await prisma.follow.findMany({
+      where: { followerId: req.userId },
+      include: {
+        following: {
+          select: { id: true, username: true }
+        }
+      }
+    });
+
+    const formatted = following.map(f => ({
+      id: f.following.id,
+      username: f.following.username,
+      isFollowing: true
+    }));
+    
+    res.json({ users: formatted });
+  } catch (error) {
+    console.error('Get following error:', error);
+    res.status(500).json({ error: 'Failed to fetch following' });
+  }
+};
