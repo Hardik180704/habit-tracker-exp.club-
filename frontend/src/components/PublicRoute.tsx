@@ -8,7 +8,7 @@ const PublicRoute = () => {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  return !token ? <Outlet /> : <Navigate to="/" replace />;
+  return !token ? <Outlet /> : <Navigate to="/dashboard" replace />;
 };
 
 export default PublicRoute;

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import api from '../services/api';
 
@@ -6,6 +6,10 @@ interface User {
   id: number;
   username: string;
   email: string;
+  _count?: {
+    followers: number;
+    following: number;
+  };
 }
 
 interface AuthContextType {
@@ -36,8 +40,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
-  const fetchUser = async () => {
-    if (!token) {
+  const fetchUser = useCallback(async () => {
+    // Only fetch if token exists and user is not set (or we want to refresh)
+    const storedToken = localStorage.getItem('token');
+    
+    if (!storedToken) {
       setLoading(false);
       return;
     }
@@ -51,11 +58,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
   return (
     <AuthContext.Provider value={{ user, token, loading, login, logout, fetchUser }}>
@@ -64,6 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

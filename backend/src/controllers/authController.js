@@ -58,7 +58,15 @@ export const login = async (req, res) => {
     
     // Find user
     const user = await prisma.user.findUnique({
-      where: { username: username.toLowerCase() }
+      where: { username: username.toLowerCase() },
+      include: {
+        _count: {
+          select: {
+            followers: true,
+            following: true
+          }
+        }
+      }
     });
     
     if (!user) {
@@ -111,5 +119,21 @@ export const getMe = async (req, res) => {
   } catch (error) {
     console.error('Get me error:', error);
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+};
+
+export const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    // Prisma's cascade delete will handle related Habits, Completions, Integrations, etc.
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+
+    res.json({ success: true, message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ error: 'Failed to delete account' });
   }
 };
