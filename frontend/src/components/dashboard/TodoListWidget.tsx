@@ -23,69 +23,72 @@ const TodoListWidget = ({ habits, onCheckIn, onNewHabit }: TodoListWidgetProps) 
 
     const today = new Date().toISOString().split('T')[0];
 
+    // Assuming 'todayHabits' is meant to be 'habits' from props,
+    // and 'Tag' icon is not imported, so replacing with MapPin for now.
+    // Also, the mock time is hardcoded in the new snippet, so I'll use that.
+    // The new snippet also removes the onNewHabit button for empty state.
+    const todayHabits = habits; // Using habits from props as todayHabits
+
     return (
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-50 h-full flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-gray-900 text-lg">Today's Todos</h3>
-                <button className="text-xs font-semibold text-gray-500 hover:text-gray-900">View Details</button>
-            </div>
+        <div className="h-full flex flex-col p-6 bg-white dark:bg-gray-800 transition-colors">
+      <div className="flex justify-between items-center mb-6">
+         <h3 className="font-bold text-xl text-gray-900 dark:text-white">Today's Todos</h3>
+         <button className="text-xs font-bold text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">View Details</button>
+      </div>
 
-            <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                 {/* Add New Placeholder/Button inside list if empty */}
-                 {habits.length === 0 && (
-                    <div className="text-center py-8 border-2 border-dashed border-gray-100 rounded-2xl">
-                        <p className="text-gray-400 text-sm mb-3">No habits for today</p>
-                        <button onClick={onNewHabit} className="text-orange-500 text-sm font-bold hover:underline">
-                            + Add Habit
-                        </button>
-                    </div>
-                )}
-
-                {habits.map((habit) => {
-                    const isCompleted = habit.completedDates.includes(today);
-                    const mock = getMockDetails(habit.id);
-
-                    return (
-                        <div key={habit.id} className="group flex items-start gap-4 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                            {/* Icon Box */}
-                            <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-2xl shadow-sm border border-gray-100 shrink-0 group-hover:bg-white group-hover:shadow-md transition-all">
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
+         {todayHabits.length === 0 ? (
+             <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-2 opacity-60">
+                 <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center dark:bg-gray-700">
+                     <Check className="w-6 h-6" />
+                 </div>
+                 <p className="text-sm font-medium">All caught up!</p>
+             </div>
+         ) : (
+             todayHabits.map(habit => {
+                 const isCompleted = habit.completedDates.includes(today);
+                 return (
+                    <div key={habit.id} className="group flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 dark:hover:bg-gray-700/50 dark:hover:border-gray-700">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl shadow-sm dark:bg-gray-700">
                                 {habit.icon || '📝'}
                             </div>
-
-                            <div className="flex-1 min-w-0 pt-1">
-                                <h4 className={`font-bold text-gray-900 truncate ${isCompleted ? 'line-through text-gray-400' : ''}`}>
+                            <div>
+                                <h4 className={`font-bold text-sm ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200'}`}>
                                     {habit.name}
                                 </h4>
-                                <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                                    <span className="flex items-center gap-1">
+                                <div className="flex items-center gap-3 mt-1">
+                                    <span className="flex items-center gap-1 text-[10px] text-gray-400 font-medium bg-gray-100 px-1.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-400">
                                         <Clock className="w-3 h-3" />
-                                        {mock.time}
+                                        08:00am
                                     </span>
-                                    <span className="flex items-center gap-1">
-                                        <MapPin className="w-3 h-3" />
-                                        {mock.loc}
+                                    <span className="flex items-center gap-1 text-[10px] text-gray-400 font-medium">
+                                        <MapPin className="w-3 h-3" /> {/* Replaced Tag with MapPin as Tag is not imported */}
+                                        {habit.category}
                                     </span>
                                 </div>
                             </div>
-
-                            <button 
-                                onClick={() => onCheckIn(habit.id)}
-                                disabled={isCompleted}
-                                className={`
-                                    w-8 h-8 rounded-lg flex items-center justify-center transition-all mt-1
-                                    ${isCompleted 
-                                        ? 'bg-green-500 text-white shadow-green-200 shadow-lg' 
-                                        : 'bg-gray-100 text-gray-300 hover:bg-green-100 hover:text-green-500'
-                                    }
-                                `}
-                            >
-                                <Check className="w-5 h-5" />
-                            </button>
                         </div>
-                    );
-                })}
-            </div>
-        </div>
+
+                        <button 
+                            onClick={() => onCheckIn(habit.id)}
+                            disabled={isCompleted}
+                            className={`
+                                w-8 h-8 rounded-full flex items-center justify-center transition-all
+                                ${isCompleted 
+                                    ? 'bg-green-500 text-white shadow-lg shadow-green-200 dark:shadow-none' 
+                                    : 'bg-gray-100 text-gray-400 hover:bg-green-500 hover:text-white dark:bg-gray-700 dark:text-gray-500 dark:hover:bg-green-500 dark:hover:text-white'
+                                }
+                            `}
+                        >
+                            <Check className="w-4 h-4 font-bold" />
+                        </button>
+                    </div>
+                 )
+             })
+         )}
+      </div>
+    </div>
     );
 };
 

@@ -120,7 +120,9 @@ export const getDashboardStats = async (req, res) => {
 
     let scoreChange = 0;
     if (lastWeekCompletions === 0) {
-        scoreChange = currentWeekCompletions > 0 ? 100 : 0;
+        // For new users, show explosive growth (1 check-in = 100%, 2 = 200% etc)
+        // This avoids the "stuck at 100%" feeling
+        scoreChange = currentWeekCompletions * 100;
     } else {
         scoreChange = Math.round(((currentWeekCompletions - lastWeekCompletions) / lastWeekCompletions) * 100);
     }

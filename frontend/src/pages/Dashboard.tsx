@@ -7,8 +7,9 @@ import CreateHabitModal from '../components/CreateHabitModal';
 import Sidebar from '../components/dashboard/Sidebar';
 import WeatherCard from '../components/dashboard/WeatherCard';
 import TodoListWidget from '../components/dashboard/TodoListWidget';
-import { SpotifyCard, MoreIntegrationsCard } from '../components/dashboard/IntegrationCards';
+import { SpotifyCard, NotionCard } from '../components/dashboard/IntegrationCards';
 import { AnalyticsStats, HabitsWrapped, RunningCompetition, FavoriteHabitsChart, ShouldDoWidget, ClubWidget } from '../components/dashboard/AnalyticsWidgets';
+import WrappedModal from '../components/dashboard/WrappedModal';
 import type { Habit, DashboardStats } from '../types';
 
 const Dashboard = () => {
@@ -16,8 +17,10 @@ const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isWrappedOpen, setIsWrappedOpen] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [habitsRes, statsRes] = await Promise.all([
         api.get('/habits'),
@@ -28,14 +31,22 @@ const Dashboard = () => {
       setStats(statsRes.data);
     } catch (error) {
       console.error('Failed to fetch dashboard data', error);
-      toast.error('Failed to load dashboard');
+      if (!silent) toast.error('Failed to load dashboard');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
+    // Initial fetch
     fetchData();
+
+    // Poll every 5 seconds
+    const intervalId = setInterval(() => {
+      fetchData(true);
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleCreateHabit = async (data: any) => {
@@ -90,47 +101,48 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen bg-gray-50 pb-8 dark:bg-gray-900 transition-colors">
       <Navbar onAddHabit={() => setIsModalOpen(true)} />
 
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-[1700px] mx-auto px-6 h-[calc(100vh-2rem)] min-h-[850px] overflow-y-auto overflow-x-hidden py-4 custom-scrollbar">
         <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 lg:grid-cols-12 gap-8"
+            initial={{ opacity: 0, scale: 0.99 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="grid grid-cols-12 gap-5 h-full"
         >
-            {/* Left Column: Sidebar (3 cols) */}
-            <div className="lg:col-span-3">
-                <Sidebar onNewHabit={() => setIsModalOpen(true)} stats={stats} />
+            {/* COLUMN 1: SIDEBAR (3 cols) */}
+            <div className="col-span-3 h-full">
+                <Sidebar onNewHabit={() => setIsModalOpen(true)} />
             </div>
 
-            {/* Middle Column: Visual Widgets (5 cols) */}
-            <div className="lg:col-span-5 space-y-6">
-                <div className="flex justify-between items-end">
-                    <h3 className="font-bold text-lg">Weather</h3>
-                    <span className="text-xs text-gray-500 cursor-pointer">View Details</span>
+            {/* COLUMN 2: WIDGETS LEFT (3 cols) */}
+            <div className="col-span-3 flex flex-col gap-5 h-full">
+                {/* Weather */}
+                <div className="flex-[3] shrink-0 min-h-0">
+                    <WeatherCard />
                 </div>
-                <WeatherCard />
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <div className="space-y-4">
-                         <h3 className="font-bold text-lg">My Focus</h3>
+                {/* Stacked Focus Widgets */}
+                <div className="flex-[4] flex flex-col gap-4 min-h-0">
+                     <div className="flex-1 bg-white rounded-3xl p-5 border border-gray-100 flex flex-col justify-center min-h-0 dark:bg-gray-800 dark:border-gray-700 transition-colors">
+                         <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-white">Should Do!</h3>
                          <ShouldDoWidget stats={stats} />
-                         <ClubWidget />
                      </div>
-                     <div className="space-y-4 pt-10 sm:pt-0">
-                         {/* Spacer for visual alignment or more widgets */}
+                     <div className="flex-1 bg-white rounded-3xl p-5 border border-gray-100 flex flex-col justify-center min-h-0 dark:bg-gray-800 dark:border-gray-700 transition-colors">
+                         <ClubWidget />
                      </div>
                 </div>
 
-                <div className="pt-2">
+                {/* Running Map */}
+                <div className="flex-[3] min-h-0">
                     <RunningCompetition />
                 </div>
             </div>
 
-            {/* Right Column: List & Stats (4 cols) */}
-            <div className="lg:col-span-4 space-y-6">
-                 <div className="h-[400px]">
+            {/* COLUMN 3: TODOS & ANALYTICS (3 cols) */}
+            <div className="col-span-3 flex flex-col gap-5 h-full">
+                 {/* Todo List - Big chunk */}
+                 <div className="flex-[6] bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden min-h-0 dark:bg-gray-800 dark:border-gray-700 transition-colors">
                     <TodoListWidget 
                         habits={habits}
                         onCheckIn={handleCheckIn}
@@ -138,18 +150,33 @@ const Dashboard = () => {
                     />
                  </div>
 
-                 <div className="grid grid-cols-2 gap-4 h-48">
-                     <AnalyticsStats stats={stats} />
-                     <HabitsWrapped />
+                 {/* Analytics & Wrapped */}
+                 <div className="flex-[4] flex flex-col min-h-0 gap-2">
+                     <h3 className="font-bold text-lg dark:text-white">Analytics</h3>
+                     <div className="flex-1 grid grid-cols-2 gap-4 min-h-0">
+                        <AnalyticsStats stats={stats} />
+                        <HabitsWrapped onView={() => setIsWrappedOpen(true)} />
+                     </div>
                  </div>
+            </div>
 
-                 <div className="grid grid-cols-2 gap-4 h-40">
+            {/* COLUMN 4: MUSIC & CHARTS (3 cols) */}
+            <div className="col-span-3 flex flex-col gap-5 h-full">
+                 {/* Spotify */}
+                 <div className="flex-[3] min-h-0">
                      <SpotifyCard />
-                     <MoreIntegrationsCard />
                  </div>
 
-                 <div className="pt-2">
-                     <FavoriteHabitsChart stats={stats} />
+                 {/* Integrations (Notion Card) */}
+                 <div className="flex-[3] min-h-0">
+                     <NotionCard />
+                 </div>
+                 
+                 {/* Favorite Habits Chart */}
+                 <div className="flex-[3] min-h-0">
+                     <div className="h-full w-full flex flex-col">
+                        <FavoriteHabitsChart stats={stats} />
+                     </div>
                  </div>
             </div>
         </motion.div>
@@ -159,6 +186,12 @@ const Dashboard = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateHabit}
+      />
+      
+      <WrappedModal 
+        isOpen={isWrappedOpen}
+        onClose={() => setIsWrappedOpen(false)}
+        stats={stats}
       />
     </div>
   );

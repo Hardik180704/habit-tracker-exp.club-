@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, User, LayoutDashboard, Users, Plus } from 'lucide-react';
+import { LogOut, LayoutDashboard, Users, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface NavbarProps {
@@ -9,6 +9,7 @@ interface NavbarProps {
 }
 
 import ProfileModal from './ProfileModal';
+import ThemeToggle from './ThemeToggle';
 
 const Navbar = ({ onAddHabit }: NavbarProps) => {
   const { user, logout } = useAuth();
@@ -28,15 +29,13 @@ const Navbar = ({ onAddHabit }: NavbarProps) => {
 
   return (
     <>
-      <nav className="bg-white border-b border-neutral-200 sticky top-0 z-50">
+      <nav className="bg-white border-b border-neutral-200 sticky top-0 z-50 dark:bg-gray-900 dark:border-gray-800 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link to="/" className="flex-shrink-0 flex items-center gap-2">
-                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">
-                  HT
-                </div>
-                <span className="text-xl font-bold text-neutral-900 hidden sm:block">HabitTracker</span>
+                <img src="/logo.png" alt="Onyx Logo" className="w-8 h-8 rounded-lg border border-gray-800" />
+                <span className="text-2xl font-bold text-neutral-900 hidden sm:block dark:text-white transition-colors tracking-tight font-['Outfit']">Onyx</span>
               </Link>
               
               <div className="hidden sm:ml-10 sm:flex sm:space-x-8">
@@ -49,11 +48,11 @@ const Navbar = ({ onAddHabit }: NavbarProps) => {
                       to={item.path}
                       className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
                         isActive
-                          ? 'border-indigo-500 text-gray-900'
-                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                          ? 'border-indigo-500 text-gray-900 dark:text-white dark:border-indigo-400'
+                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-700'
                       }`}
                     >
-                      <Icon className={`w-4 h-4 mr-2 ${isActive ? 'text-indigo-600' : ''}`} />
+                      <Icon className={`w-4 h-4 mr-2 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : ''}`} />
                       {item.name}
                     </Link>
                   );
@@ -75,6 +74,8 @@ const Navbar = ({ onAddHabit }: NavbarProps) => {
               )}
 
               <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200">
+                <ThemeToggle />
+                
                 <button 
                   onClick={() => setIsProfileOpen(true)}
                   className="flex items-center space-x-2 hover:bg-gray-50 p-1.5 rounded-lg transition-colors"
