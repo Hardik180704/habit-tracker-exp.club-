@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 
 import authRoutes from './routes/authRoutes.js';
 import habitsRoutes from './routes/habitsRoutes.js';
+import socialRoutes from './routes/socialRoutes.js';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/habits', habitsRoutes);
+app.use('/api/social', socialRoutes);
 
 // Root route
 app.get('/', (req, res) => {
