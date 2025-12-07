@@ -1,24 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [stats, setStats] = useState<any>(null);
+  // const [stats, setStats] = useState<any>(null);
 
-  useEffect(() => {
-    // Placeholder for fetching dashboard data
-    const fetchDashboard = async () => {
-      // For now just show a welcome message
-    };
-    fetchDashboard();
-  }, []);
+  // useEffect(() => {
+  //   // Placeholder for fetching dashboard data
+  //   const fetchDashboard = async () => {
+  //     // For now just show a welcome message
+  //   };
+  //   fetchDashboard();
+  // }, []);
 
   return (
     <div className="space-y-6">
       <header>
         <h1 className="text-3xl font-bold leading-tight text-gray-900">
-          Dashboard
+          Welcome, {user?.username || 'User'}!
         </h1>
         <p className="mt-2 text-sm text-gray-600">
           Track your daily habits and progress.
