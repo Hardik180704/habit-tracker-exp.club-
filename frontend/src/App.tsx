@@ -7,6 +7,7 @@ import PrivateRoute from './components/PrivateRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Social from './pages/Social';
 
 function App() {
   return (
@@ -23,7 +24,7 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />
-            {/* Future routes will go here: /habits, /social, etc. */}
+            <Route path="/social" element={<Social />} />
           </Route>
         </Route>
 

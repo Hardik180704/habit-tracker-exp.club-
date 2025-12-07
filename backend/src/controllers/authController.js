@@ -93,7 +93,13 @@ export const getMe = async (req, res) => {
         id: true,
         username: true,
         email: true,
-        createdAt: true
+        createdAt: true,
+        _count: {
+          select: {
+            followers: true,
+            following: true
+          }
+        }
       }
     });
     
