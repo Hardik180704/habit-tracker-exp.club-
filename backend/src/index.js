@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 
+import authRoutes from './routes/authRoutes.js';
+
 dotenv.config();
 
 const app = express();
@@ -14,6 +16,14 @@ app.use(helmet());
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
+
+// Routes
+app.use('/api/auth', authRoutes);
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'Habit Tracker API is running 🚀' });
+});
 
 // Health check
 app.get('/health', (req, res) => {
