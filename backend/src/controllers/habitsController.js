@@ -6,10 +6,59 @@ export const getAllHabits = async (req, res) => {
   try {
     const habits = await prisma.habit.findMany({
       where: { userId: req.userId },
+      include: {
+        completions: {
+          orderBy: { completedAt: 'desc' }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
     
-    res.json({ habits });
+    // Process habits to add derived fields expected by frontend
+    const habitsWithStats = habits.map(habit => {
+      // 1. completedDates
+      const completedDates = habit.completions.map(c => 
+        c.completedAt.toISOString().split('T')[0]
+      );
+
+      // 2. Calculate Streak
+      let currentStreak = 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const sortedCompletions = habit.completions.map(c => {
+        const d = new Date(c.completedAt);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+      }).sort((a, b) => b - a);
+      
+      if (sortedCompletions.length > 0) {
+        const lastCompletion = sortedCompletions[0];
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        // If completed today or yesterday, streak is active
+        if (lastCompletion === today.getTime() || lastCompletion === yesterday.getTime()) {
+          currentStreak = 1;
+          for (let i = 0; i < sortedCompletions.length - 1; i++) {
+            const current = sortedCompletions[i];
+            const next = sortedCompletions[i + 1];
+            const diffDays = (current - next) / (1000 * 60 * 60 * 24);
+            if (diffDays === 1) currentStreak++;
+            else break;
+          }
+        }
+      }
+
+      return {
+        ...habit,
+        completedDates,
+        streak: currentStreak,
+        totalCompletions: habit.completions.length
+      };
+    });
+    
+    res.json({ habits: habitsWithStats });
   } catch (error) {
     console.error('Get habits error:', error);
     res.status(500).json({ error: 'Failed to fetch habits' });
