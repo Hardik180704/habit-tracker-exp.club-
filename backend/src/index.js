@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 
 import authRoutes from './routes/authRoutes.js';
+import habitsRoutes from './routes/habitsRoutes.js';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/habits', habitsRoutes);
 
 // Root route
 app.get('/', (req, res) => {
