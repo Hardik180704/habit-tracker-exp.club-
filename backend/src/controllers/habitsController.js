@@ -45,16 +45,6 @@ export const createHabit = async (req, res) => {
     }
     
     // Create habit
-    console.log('Creating habit with data:', {
-        userId: req.userId,
-        name: name.trim(),
-        description: description?.trim(),
-        frequency: frequency || 'DAILY',
-        category: category || 'OTHER',
-        color,
-        icon
-    });
-
     const habit = await prisma.habit.create({
       data: {
         userId: req.userId,
@@ -69,8 +59,8 @@ export const createHabit = async (req, res) => {
     
     res.status(201).json({ habit });
   } catch (error) {
-    console.error('Create habit error detailed:', error);
-    res.status(500).json({ error: 'Failed to create habit', details: error.message });
+    console.error('Create habit error:', error);
+    res.status(500).json({ error: 'Failed to create habit' });
   }
 };
 
@@ -158,5 +148,122 @@ export const deleteHabit = async (req, res) => {
   } catch (error) {
     console.error('Delete habit error:', error);
     res.status(500).json({ error: 'Failed to delete habit' });
+  }
+};
+
+export const checkInHabit = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date } = req.body; // Expects YYYY-MM-DD
+    
+    // Validate date format
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ error: 'Date must be in YYYY-MM-DD format' });
+    }
+    
+    // Check ownership
+    const habit = await prisma.habit.findUnique({
+      where: { id: parseInt(id) }
+    });
+    
+    if (!habit || habit.userId !== req.userId) {
+      return res.status(404).json({ error: 'Habit not found' });
+    }
+    
+    const checkInDate = new Date(date);
+    
+    // Check if already completed
+    const existingCompletion = await prisma.completion.findFirst({
+      where: {
+        habitId: parseInt(id),
+        completedAt: checkInDate
+      }
+    });
+    
+    if (existingCompletion) {
+      // Toggle off (Remove completion)
+      await prisma.completion.delete({
+        where: { id: existingCompletion.id }
+      });
+      return res.json({ message: 'Check-in removed', completed: false });
+    } else {
+      // Toggle on (Add completion)
+      const completion = await prisma.completion.create({
+        data: {
+          habitId: parseInt(id),
+          userId: req.userId,
+          completedAt: checkInDate
+        }
+      });
+      return res.json({ message: 'Check-in successful', completed: true, completion });
+    }
+  } catch (error) {
+    console.error('Check-in error:', error);
+    res.status(500).json({ error: 'Failed to update check-in status' });
+  }
+};
+
+export const getHabitStats = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check ownership
+    const habit = await prisma.habit.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        completions: {
+          orderBy: { completedAt: 'desc' }
+        }
+      }
+    });
+    
+    if (!habit || habit.userId !== req.userId) {
+      return res.status(404).json({ error: 'Habit not found' });
+    }
+    
+    // Calculate Streak
+    let currentStreak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const sortedCompletions = habit.completions.map(c => {
+      const d = new Date(c.completedAt);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime();
+    }).sort((a, b) => b - a); // Descending
+    
+    // Check if completed today or yesterday to exist in streak
+    if (sortedCompletions.length > 0) {
+      const lastCompletion = sortedCompletions[0];
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      // If completed today or yesterday, streak is active
+      if (lastCompletion === today.getTime() || lastCompletion === yesterday.getTime()) {
+        currentStreak = 1;
+        
+        // Count backwards
+        for (let i = 0; i < sortedCompletions.length - 1; i++) {
+          const current = sortedCompletions[i];
+          const next = sortedCompletions[i + 1];
+          const diffDays = (current - next) / (1000 * 60 * 60 * 24);
+          
+          if (diffDays === 1) {
+            currentStreak++;
+          } else {
+            break;
+          }
+        }
+      }
+    }
+    
+    res.json({
+      streak: currentStreak,
+      totalCompletions: habit.completions.length,
+      completions: habit.completions // Return dates for calendar
+    });
+  } catch (error) {
+    console.error('Get stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
   }
 };
