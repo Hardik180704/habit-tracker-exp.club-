@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Social from './pages/Social';
+import Landing from './pages/Landing';
 
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './pages/NotFound';
@@ -20,15 +21,17 @@ function App() {
         <AuthProvider>
           <Toaster position="top-right" />
           <Routes>
-            {/* Public Routes (Login/Register) */}
+            {/* Public Routes */}
+            <Route path="/" element={<Landing />} />
+            
             <Route element={<PublicRoute />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
             </Route>
   
-            {/* Protected Routes (Dashboard, etc.) */}
+            {/* Protected Routes */}
             <Route element={<PrivateRoute />}>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route element={<Layout />}>
                 <Route path="/social" element={<Social />} />
               </Route>

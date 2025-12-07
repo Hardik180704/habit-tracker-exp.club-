@@ -2,14 +2,16 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 
 import authRoutes from './routes/authRoutes.js';
 import habitsRoutes from './routes/habitsRoutes.js';
 import socialRoutes from './routes/socialRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import integrationRoutes from './routes/integrationRoutes.js';
+import 'dotenv/config';
+import { PrismaClient } from '@prisma/client';
 
-dotenv.config();
+// dotenv.config() is now handled by the import above
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -25,6 +27,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/habits', habitsRoutes);
 app.use('/api/social', socialRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/integrations', integrationRoutes);
 
 // Root route
 app.get('/', (req, res) => {

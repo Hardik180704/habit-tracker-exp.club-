@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { UserPlus, UserCheck, Loader2, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { SocialUser } from '../types';
@@ -26,7 +26,7 @@ const UserCard = ({ user, onFollow, onUnfollow }: UserCardProps) => {
         setIsFollowing(true);
         toast.success(`Following ${user.username}`);
       }
-    } catch (error) {
+    } catch {
       toast.error('Action failed');
     } finally {
       setIsLoading(false);

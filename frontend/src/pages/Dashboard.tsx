@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { AxiosError } from 'axios';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -8,9 +9,11 @@ import Sidebar from '../components/dashboard/Sidebar';
 import WeatherCard from '../components/dashboard/WeatherCard';
 import TodoListWidget from '../components/dashboard/TodoListWidget';
 import { SpotifyCard, NotionCard } from '../components/dashboard/IntegrationCards';
-import { AnalyticsStats, HabitsWrapped, RunningCompetition, FavoriteHabitsChart, ShouldDoWidget, ClubWidget } from '../components/dashboard/AnalyticsWidgets';
+import { AnalyticsStats, HabitsWrapped, RunningCompetition, FavoriteHabitsChart, ShouldDoWidget } from '../components/dashboard/AnalyticsWidgets';
+import FiveAMClubWidget from '../components/dashboard/FiveAMClubWidget';
 import WrappedModal from '../components/dashboard/WrappedModal';
 import type { Habit, DashboardStats } from '../types';
+
 
 const Dashboard = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -18,6 +21,38 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWrappedOpen, setIsWrappedOpen] = useState(false);
+
+  // Handle OAuth Callbacks
+  // Handle OAuth Callbacks
+  useEffect(() => {
+    // ... existing oauth code
+    const handleCallback = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const state = params.get('state');
+
+      if (code && state) {
+        // Clear URL immediately to prevent double-calls
+        window.history.replaceState({}, document.title, window.location.pathname);
+        const toastId = toast.loading(`Connecting to ${state === 'spotify' ? 'Spotify' : 'Notion'}...`);
+
+        try {
+          if (state === 'spotify') {
+            await api.post('/integrations/spotify/callback', { code });
+          } else if (state === 'notion') {
+            await api.post('/integrations/notion/callback', { code });
+          }
+          toast.success('Connected successfully!', { id: toastId });
+          // Optional: Trigger a refresh of the cards or context if needed
+        } catch (error) {
+          console.error('Integration error:', error);
+          toast.error('Failed to connect integration', { id: toastId });
+        }
+      }
+    };
+
+    handleCallback();
+  }, []);
 
   const fetchData = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -41,27 +76,28 @@ const Dashboard = () => {
     // Initial fetch
     fetchData();
 
-    // Poll every 5 seconds
+    // Poll every 30 seconds
     const intervalId = setInterval(() => {
       fetchData(true);
-    }, 5000);
+    }, 30000);
 
     return () => clearInterval(intervalId);
   }, []);
 
-  const handleCreateHabit = async (data: any) => {
+  const handleCreateHabit = useCallback(async (data: Partial<Habit>) => {
     try {
       await api.post('/habits', data);
       toast.success('Habit created successfully! 🎉');
       fetchData(); 
-    } catch (error: any) {
-      const msg = error.response?.data?.error || 'Failed to create habit';
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
+      const msg = err.response?.data?.error || 'Failed to create habit';
       toast.error(msg);
       throw error; 
     }
-  };
+  }, []);
 
-  const handleCheckIn = async (habitId: number) => {
+  const handleCheckIn = useCallback(async (habitId: number) => {
     const previousHabits = [...habits];
     const today = new Date().toISOString().split('T')[0];
 
@@ -85,12 +121,15 @@ const Dashboard = () => {
       // Background refresh stats for accurate data
       const statsRes = await api.get('/dashboard/stats');
       setStats(statsRes.data);
-    } catch (error: any) {
+    } catch (error) {
       setHabits(previousHabits);
-      const msg = error.response?.data?.error || 'Check-in failed';
+      const err = error as AxiosError<{ error: string }>;
+      const msg = err.response?.data?.error || 'Check-in failed';
       toast.error(msg);
     }
-  };
+  }, [habits]); // Dependency on habits needed for optimistic update logic
+
+  const openModal = useCallback(() => setIsModalOpen(true), []);
 
   if (loading) {
     return (
@@ -102,51 +141,50 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-8 dark:bg-gray-900 transition-colors">
-      <Navbar onAddHabit={() => setIsModalOpen(true)} />
+      <Navbar />
 
       <main className="max-w-[1700px] mx-auto px-6 h-[calc(100vh-2rem)] min-h-[850px] overflow-y-auto overflow-x-hidden py-4 custom-scrollbar">
         <motion.div 
             initial={{ opacity: 0, scale: 0.99 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="grid grid-cols-12 gap-5 h-full"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-full"
         >
             {/* COLUMN 1: SIDEBAR (3 cols) */}
-            <div className="col-span-3 h-full">
-                <Sidebar onNewHabit={() => setIsModalOpen(true)} />
+            <div className="lg:col-span-3 h-full">
+                <Sidebar onNewHabit={openModal} />
             </div>
 
             {/* COLUMN 2: WIDGETS LEFT (3 cols) */}
-            <div className="col-span-3 flex flex-col gap-5 h-full">
+            <div className="lg:col-span-3 flex flex-col gap-5 h-full">
                 {/* Weather */}
-                <div className="flex-[3] shrink-0 min-h-0">
+                <div className="flex-[2.5] shrink-0 min-h-0">
                     <WeatherCard />
                 </div>
                 
                 {/* Stacked Focus Widgets */}
-                <div className="flex-[4] flex flex-col gap-4 min-h-0">
+                <div className="flex-[5] flex flex-col gap-4 min-h-0">
                      <div className="flex-1 bg-white rounded-3xl p-5 border border-gray-100 flex flex-col justify-center min-h-0 dark:bg-gray-800 dark:border-gray-700 transition-colors">
                          <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-white">Should Do!</h3>
                          <ShouldDoWidget stats={stats} />
                      </div>
-                     <div className="flex-1 bg-white rounded-3xl p-5 border border-gray-100 flex flex-col justify-center min-h-0 dark:bg-gray-800 dark:border-gray-700 transition-colors">
-                         <ClubWidget />
+                     <div className="flex-1 flex flex-col justify-center min-h-0">
+                         <FiveAMClubWidget />
                      </div>
                 </div>
 
                 {/* Running Map */}
-                <div className="flex-[3] min-h-0">
+                <div className="flex-[2.5] min-h-0">
                     <RunningCompetition />
                 </div>
             </div>
 
             {/* COLUMN 3: TODOS & ANALYTICS (3 cols) */}
-            <div className="col-span-3 flex flex-col gap-5 h-full">
+            <div className="lg:col-span-3 flex flex-col gap-5 h-full">
                  {/* Todo List - Big chunk */}
                  <div className="flex-[6] bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden min-h-0 dark:bg-gray-800 dark:border-gray-700 transition-colors">
                     <TodoListWidget 
                         habits={habits}
                         onCheckIn={handleCheckIn}
-                        onNewHabit={() => setIsModalOpen(true)}
                     />
                  </div>
 
@@ -161,7 +199,7 @@ const Dashboard = () => {
             </div>
 
             {/* COLUMN 4: MUSIC & CHARTS (3 cols) */}
-            <div className="col-span-3 flex flex-col gap-5 h-full">
+            <div className="lg:col-span-3 flex flex-col gap-5 h-full">
                  {/* Spotify */}
                  <div className="flex-[3] min-h-0">
                      <SpotifyCard />

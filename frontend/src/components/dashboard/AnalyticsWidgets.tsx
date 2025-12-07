@@ -1,11 +1,13 @@
 import { ChevronDown, Gift, ArrowUpRight, ChevronRight, Flame } from 'lucide-react';
 import type { DashboardStats } from '../../types';
+import { useState, useEffect, memo } from 'react';
+import api from '../../services/api';
 
 interface AnalyticsProps {
     stats?: DashboardStats;
 }
 
-export const AnalyticsStats = ({ stats }: AnalyticsProps) => {
+export const AnalyticsStats = memo(({ stats }: AnalyticsProps) => {
   const score = stats?.scoreChange ?? 0;
   const isPositive = score >= 0;
 
@@ -27,9 +29,9 @@ export const AnalyticsStats = ({ stats }: AnalyticsProps) => {
       </div>
     </div>
   );
-};
+});
 
-export const HabitsWrapped = ({ onView }: { onView?: () => void }) => {
+export const HabitsWrapped = memo(({ onView }: { onView?: () => void }) => {
   return (
     <div className="bg-[#1C1C1E] rounded-3xl p-6 text-white text-center relative overflow-hidden h-full flex flex-col justify-between">
       <div className="absolute inset-0 opacity-20" 
@@ -53,18 +55,36 @@ export const HabitsWrapped = ({ onView }: { onView?: () => void }) => {
       </button>
     </div>
   );
-};
+});
 
-export const RunningCompetition = () => {
+export const RunningCompetition = memo(() => {
+    const [stats, setStats] = useState({ found: false, miles: 0, targetMiles: 20, daysLeft: 0, habitName: '' });
+    
+    useEffect(() => {
+        const fetchRunningStats = async () => {
+            try {
+                const res = await api.get('/dashboard/stats/running');
+                setStats(res.data);
+            } catch {
+                console.error('Failed to fetch running stats');
+            }
+        };
+        fetchRunningStats();
+    }, []);
+
   return (
     <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-50 relative overflow-hidden dark:bg-gray-800 dark:border-gray-700 transition-colors">
         <div className="flex justify-between items-start mb-4">
             <div>
                 <h3 className="font-bold text-gray-900 dark:text-white">Running Competition</h3>
-                <div className="flex gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    <span className="flex items-center gap-1">📅 31 Dec</span>
-                    <span className="flex items-center gap-1">🎯 20miles</span>
-                </div>
+                {stats.found ? (
+                    <div className="flex gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <span className="flex items-center gap-1">📅 {stats.daysLeft} days left</span>
+                        <span className="flex items-center gap-1">🎯 {stats.targetMiles} miles goal</span>
+                    </div>
+                ) : (
+                    <p className="text-xs text-orange-500 mt-1">Create a "Run" habit to join!</p>
+                )}
             </div>
             <button className="w-10 h-10 bg-orange-400 rounded-full flex items-center justify-center text-white hover:bg-orange-500 transition-colors shadow-lg shadow-orange-200 dark:shadow-none">
                 <ArrowUpRight className="w-5 h-5" />
@@ -72,20 +92,39 @@ export const RunningCompetition = () => {
         </div>
         
         <div className="h-32 bg-gray-100 rounded-2xl relative overflow-hidden dark:bg-gray-700">
-            <div className="absolute inset-0 opacity-50 bg-[url('https://api.mapbox.com/styles/v1/mapbox/light-v10/static/0,0,2/300x200?access_token=mock')] bg-cover"></div>
-            <svg className="absolute inset-0 w-full h-full text-blue-400 stroke-current stroke-[4] fill-none" viewBox="0 0 100 50" preserveAspectRatio="none">
-                <path d="M10,40 Q30,10 50,30 T90,20" />
-            </svg>
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <div className="w-4 h-4 bg-yellow-400 rounded-full border-2 border-white shadow-md"></div>
-             </div>
+            {/* Map Background - Replaced expensive external image with static gradient */}
+            <div className="absolute inset-0 opacity-50 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-600 dark:to-gray-800"></div>
+            
+            {/* Progress Path Visualization */}
+            <div className="absolute bottom-4 left-4 right-4">
+                 <div className="flex justify-between text-xs font-bold mb-1">
+                    <span className="text-gray-600 dark:text-gray-300">{stats.miles}mi</span>
+                    <span className="text-gray-400">{stats.targetMiles}mi</span>
+                 </div>
+                 <div className="h-2 bg-white/50 rounded-full overflow-hidden">
+                    <div 
+                        className="h-full bg-orange-500 rounded-full transition-all duration-1000 ease-out"
+                        style={{ width: `${Math.min((stats.miles / stats.targetMiles) * 100, 100)}%` }}
+                    ></div>
+                 </div>
+            </div>
+
+             {/* Runner Icon */}
+             {stats.found && (
+                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div className="flex flex-col items-center animate-bounce">
+                        <span className="text-2xl">🏃</span>
+                        <div className="w-8 h-1 bg-black/20 rounded-full"></div>
+                    </div>
+                 </div>
+             )}
         </div>
     </div>
   );
-};
+});
 
 // 1. Should Do Widget (Suggests a habit to focus on)
-export const ShouldDoWidget = ({ stats }: AnalyticsProps) => {
+export const ShouldDoWidget = memo(({ stats }: AnalyticsProps) => {
     const topHabit = stats?.topHabit;
 
   return (
@@ -105,10 +144,10 @@ export const ShouldDoWidget = ({ stats }: AnalyticsProps) => {
        </button>
     </div>
   );
-};
+});
 
 // 2. 5am Club / Community Widget
-export const ClubWidget = () => {
+export const ClubWidget = memo(() => {
   return (
     <div className="flex items-center gap-3 group cursor-pointer">
        <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-xl shadow-sm group-hover:bg-red-100 transition-colors dark:bg-red-900/30 dark:group-hover:bg-red-900/50">
@@ -123,10 +162,10 @@ export const ClubWidget = () => {
        </button>
     </div>
   );
-};
+});
 
 // 3. Activity / Favorite Habits Chart (Bottom Right)
-export const FavoriteHabitsChart = ({ stats }: AnalyticsProps) => {
+export const FavoriteHabitsChart = memo(({ stats }: AnalyticsProps) => {
     const data = stats?.weeklyActivity || [];
     
     // Generate last 7 days with 0 values if no data exists
@@ -185,4 +224,4 @@ export const FavoriteHabitsChart = ({ stats }: AnalyticsProps) => {
       </div>
     </div>
   );
-};
+});

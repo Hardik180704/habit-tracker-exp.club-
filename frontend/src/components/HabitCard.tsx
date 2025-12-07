@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Flame, MoreVertical, Trash2, Edit2 } from 'lucide-react';
+import { Check, Flame, MoreVertical, Trash2 } from 'lucide-react';
 import type { Habit } from '../types';
 import { format } from 'date-fns';
 

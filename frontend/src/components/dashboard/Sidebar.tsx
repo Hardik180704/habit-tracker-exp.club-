@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { Plus, ChevronLeft, ChevronRight, Quote, Sparkles } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay } from 'date-fns';
 
@@ -5,16 +6,19 @@ interface SidebarProps {
   onNewHabit: () => void;
 }
 
-const Sidebar = ({ onNewHabit }: SidebarProps) => {
-  const today = new Date();
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const startDay = getDay(monthStart);
-  const paddingDays = Array(startDay).fill(null);
-  
-  // Combine for single grid iteration
-  const days = [...paddingDays, ...daysInMonth];
+const Sidebar = memo(({ onNewHabit }: SidebarProps) => {
+  const { today, days } = useMemo(() => {
+    const today = new Date();
+    const monthStart = startOfMonth(today);
+    const monthEnd = endOfMonth(today);
+    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const startDay = getDay(monthStart);
+    const paddingDays = Array(startDay).fill(null);
+    return {
+        today,
+        days: [...paddingDays, ...daysInMonth]
+    };
+  }, []); // Empty dependency array as today/month roughly static for session
 
   const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -77,8 +81,8 @@ const Sidebar = ({ onNewHabit }: SidebarProps) => {
             </div>
           </div>
           <div className="grid grid-cols-7 gap-1 text-center text-xs mb-2">
-            {['S','M','T','W','T','F','S'].map(d => (
-                <div key={d} className="text-gray-400 font-medium dark:text-gray-500">{d}</div>
+            {weekDays.map((d, i) => (
+                <div key={i} className="text-gray-400 font-medium dark:text-gray-500">{d}</div>
             ))}
           </div>
           <div className="grid grid-cols-7 gap-y-2 gap-x-1 text-center text-sm">
@@ -98,6 +102,6 @@ const Sidebar = ({ onNewHabit }: SidebarProps) => {
 
     </div>
   );
-};
+});
 
 export default Sidebar;

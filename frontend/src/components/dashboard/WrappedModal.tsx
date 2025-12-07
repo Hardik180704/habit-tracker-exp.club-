@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { X, Sparkles, Trophy, Flame } from 'lucide-react';
 import type { DashboardStats } from '../../types';
 
@@ -11,7 +11,7 @@ interface WrappedModalProps {
 const WrappedModal = ({ isOpen, onClose, stats }: WrappedModalProps) => {
   if (!isOpen) return null;
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0, scale: 0.95 },
     visible: { opacity: 1, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } },
     exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }

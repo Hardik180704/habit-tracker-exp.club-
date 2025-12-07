@@ -141,3 +141,117 @@ export const getDashboardStats = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch dashboard stats' });
   }
 };
+
+export const getRunningStats = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const today = new Date();
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    // 1. Find "Running" habit (insensitive search)
+    const runningHabit = await prisma.habit.findFirst({
+      where: {
+        userId,
+        name: { contains: 'run', mode: 'insensitive' }
+      }
+    });
+
+    if (!runningHabit) {
+      return res.json({ found: false });
+    }
+
+    // 2. Count completions this month
+    const completionsCount = await prisma.completion.count({
+      where: {
+        habitId: runningHabit.id,
+        completedAt: { gte: startOfMonth }
+      }
+    });
+
+    // 3. Logic: 1 completion = 2 miles
+    const miles = completionsCount * 2;
+    const targetMiles = 20;
+
+    // 4. Days remaining
+    const daysLeft = Math.ceil((lastDayOfMonth - today) / (1000 * 60 * 60 * 24));
+
+    res.json({
+      found: true,
+      miles,
+      targetMiles,
+      daysLeft,
+      habitName: runningHabit.name
+    });
+
+  } catch (error) {
+    console.error('[Dashboard] Running stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch running stats' });
+  }
+};
+
+export const getFiveAMClubStats = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const now = new Date();
+    
+    // Define 5AM window for TODAY
+    // In production, handle timezones carefully. Here we assume server/client are synced or local.
+    // Window: 4:00 AM to 5:05 AM
+    const startOfWindow = new Date(now);
+    startOfWindow.setHours(4, 0, 0, 0);
+    
+    const endOfWindow = new Date(now);
+    endOfWindow.setHours(5, 5, 0, 0);
+
+    // 1. Get List of Friend IDs (people I follow)
+    const following = await prisma.follow.findMany({
+        where: { followerId: userId },
+        select: { followingId: true }
+    });
+    const friendIds = following.map(f => f.followingId);
+
+    // 2. Find completions today inside the window for ME + FRIENDS
+    // We look for ANY completion record created in that time window.
+    // This implies *any* habit checked off in that window counts as joining the club.
+    const earlyBirds = await prisma.user.findMany({
+        where: {
+            id: { in: [userId, ...friendIds] },
+            habits: {
+                some: {
+                    completions: {
+                        some: {
+                            completedAt: {
+                                gte: startOfWindow,
+                                lte: endOfWindow
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        select: {
+            id: true,
+            username: true,
+            // In a real app, avatar would be a field
+        }
+    });
+
+    const members = earlyBirds.map(u => ({
+        id: u.id,
+        username: u.username,
+        avatar: u.username.charAt(0).toUpperCase(), // Simple avatar fallback
+        isMe: u.id === userId
+    }));
+
+    res.json({
+        members,
+        count: members.length,
+        joined: members.some(m => m.isMe)
+    });
+
+  } catch (error) {
+    console.error('[Dashboard] 5AM Club error:', error);
+    res.status(500).json({ error: 'Failed to fetch 5AM stats' });
+  }
+};
