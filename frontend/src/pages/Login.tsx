@@ -3,7 +3,7 @@ import { AxiosError } from 'axios';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -120,7 +120,7 @@ const Login = () => {
                     <div>
                         <div className="flex justify-between items-center mb-2">
                             <label className="block text-sm font-semibold text-gray-300">Password</label>
-                             <button type="button" className="text-xs text-gray-500 hover:text-white transition-colors">Forgot Password?</button>
+                             <Link to="/forgot-password" className="text-xs text-gray-500 hover:text-white transition-colors">Forgot Password?</Link>
                         </div>
                         <input 
                             type="password"

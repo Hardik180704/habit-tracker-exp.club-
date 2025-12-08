@@ -35,7 +35,10 @@ const Navbar = () => {
                     <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-200"></div>
                     <img src="/logo-512.png" alt="Onyx Logo" className="relative w-8 h-8 rounded-lg object-contain" />
                 </div>
-                <span className="text-2xl font-bold text-neutral-900 hidden sm:block dark:text-white transition-colors tracking-tight font-['Outfit']">Onyx</span>
+                <div className="flex flex-col hidden sm:flex">
+                    <span className="text-2xl font-bold text-neutral-900 dark:text-white transition-colors tracking-tight font-['Outfit'] leading-none">Onyx</span>
+                    <span className="text-[10px] font-extrabold tracking-[0.2em] text-indigo-500/80 dark:text-indigo-400/80 uppercase font-['Outfit'] mt-1">Stay Locked In</span>
+                </div>
               </Link>
               
               <div className="hidden sm:ml-10 sm:flex sm:space-x-8">

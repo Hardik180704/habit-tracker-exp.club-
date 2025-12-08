@@ -4,18 +4,23 @@ import axios from 'axios';
 const prisma = new PrismaClient();
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
 const NOTION_TOKEN_URL = 'https://api.notion.com/v1/oauth/token';
-
 export const authorizeSpotify = async (req, res) => {
-  console.log('Authorize Spotify hit');
   const scope = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
   const redirectUri = process.env.SPOTIFY_REDIRECT_URI;
   const clientId = process.env.SPOTIFY_CLIENT_ID;
-
-  console.log('Spotify Config:', { redirectUri, clientId: clientId ? 'Present' : 'Missing' });
-
+  
   // Add state=spotify to identify the source on return
   const url = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=spotify`;
-  console.log('Generated Spotify URL:', url);
+  res.json({ url });
+};
+
+// ... existing callbackSpotify ...
+
+export const authorizeNotion = async (req, res) => {
+  const clientId = process.env.NOTION_CLIENT_ID;
+  const redirectUri = process.env.NOTION_REDIRECT_URI;
+
+  const url = `https://api.notion.com/v1/oauth/authorize?client_id=${clientId}&response_type=code&owner=user&redirect_uri=${encodeURIComponent(redirectUri)}&state=notion`;
   res.json({ url });
 };
 
@@ -241,16 +246,7 @@ export const spotifyPrevious = async (req, res) => {
   catch (e) { res.status(500).json({ error: e.message || 'Failed to go back' }); }
 };
 
-export const authorizeNotion = async (req, res) => {
-  console.log('Authorize Notion hit');
-  const clientId = process.env.NOTION_CLIENT_ID;
-  const redirectUri = process.env.NOTION_REDIRECT_URI;
-  
-  console.log('Notion Config:', { redirectUri, clientId: clientId ? 'Present' : 'Missing' });
 
-  const url = `https://api.notion.com/v1/oauth/authorize?client_id=${clientId}&response_type=code&owner=user&redirect_uri=${encodeURIComponent(redirectUri)}&state=notion`;
-  res.json({ url });
-};
 
 export const callbackNotion = async (req, res) => {
   const { code } = req.body;
@@ -312,8 +308,8 @@ export const getNotionStatus = async (req, res) => {
 
     res.json({ 
       isConnected: true, 
-      workspaceName: integration.metadata?.workspaceName || 'Workspace',
-      workspaceIcon: integration.metadata?.workspaceIcon
+      workspaceName: /** @type {any} */ (integration.metadata)?.workspaceName || 'Workspace',
+      workspaceIcon: /** @type {any} */ (integration.metadata)?.workspaceIcon
     });
 
   } catch (error) {
