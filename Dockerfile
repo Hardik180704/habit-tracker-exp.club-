@@ -3,6 +3,10 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy backend dependencies from the root context
+
+# Install OpenSSL (Required for Prisma on Alpine)
+RUN apk add --no-cache openssl
+
 COPY backend/package*.json ./
 COPY backend/prisma ./prisma/
 
