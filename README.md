@@ -1,7 +1,11 @@
 # Onyx - Advanced Habit Tracker 🚀
 
-![Onyx Banner](docs/images/banner.png)
-*(Recommended: Add a banner image here)*
+<div align="center">
+  <img src="docs/images/logo.png" alt="Onyx Logo" width="120" />
+  <h1>Onyx</h1>
+  <p><strong>Stay Locked In.</strong></p>
+  <p>A premium, full-stack habit tracking application designed for high performers.</p>
+</div>
 
 **Live Demo:** [https://onyx-rose.vercel.app/](https://onyx-rose.vercel.app/)
 **Backend API:** [https://onyx-production-8a8f.up.railway.app](https://onyx-production-8a8f.up.railway.app)
