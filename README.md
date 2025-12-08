@@ -3,7 +3,7 @@
 ![Onyx Banner](docs/images/banner.png)
 *(Recommended: Add a banner image here)*
 
-**Live Demo:** [https://your-vercel-frontend-url.app](https://your-vercel-frontend-url.app)
+**Live Demo:** [https://onyx-rose.vercel.app/](https://onyx-rose.vercel.app/)
 **Backend API:** [https://onyx-production-8a8f.up.railway.app](https://onyx-production-8a8f.up.railway.app)
 
 ## 📌 Overview
