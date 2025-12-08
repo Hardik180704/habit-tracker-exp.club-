@@ -4,6 +4,9 @@ import { generateToken } from '../utils/jwt.js';
 
 const prisma = new PrismaClient();
 
+import crypto from 'crypto';
+import { emailService } from '../services/emailService.js';
+
 export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -45,6 +48,18 @@ export const register = async (req, res) => {
     // Generate token
     const token = generateToken(user.id);
     
+    // Send Welcome Email (async, don't block response)
+    emailService.sendEmail({
+      to: user.email,
+      subject: 'Welcome to Onyx Habit Tracker! 🖤',
+      templateName: 'welcome',
+      data: {
+        username: user.username,
+        dashboardUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/dashboard`,
+        logoUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/logo-512.png` 
+      }
+    }).catch(err => console.error('Welcome email failed:', err.message));
+
     res.status(201).json({ user, token });
   } catch (error) {
     console.error('Register error:', error);
@@ -119,6 +134,83 @@ export const getMe = async (req, res) => {
   } catch (error) {
     console.error('Get me error:', error);
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() }
+    });
+
+    if (!user) {
+      // Return success even if user not found to prevent enumeration
+      return res.json({ message: 'If an account exists, a reset link has been sent.' });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: resetToken,
+        resetPasswordExpires
+      }
+    });
+
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+
+    await emailService.sendEmail({
+      to: user.email,
+      subject: 'Reset your Onyx password',
+      templateName: 'forgot-password',
+      data: {
+        username: user.username,
+        resetUrl
+      }
+    });
+
+    res.json({ message: 'If an account exists, a reset link has been sent.' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Failed to process request' });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    const user = await prisma.user.findFirst({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpires: { gt: new Date() }
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        resetPasswordToken: null,
+        resetPasswordExpires: null
+      }
+    });
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
   }
 };
 

@@ -24,6 +24,7 @@ export const getDashboardStats = async (req, res) => {
       }
     });
 
+    /** @type {any} */
     let topHabit = null;
     let maxStreak = -1;
 
@@ -65,7 +66,7 @@ export const getDashboardStats = async (req, res) => {
         }
     });
 
-    console.log(`[Dashboard] Top habit: ${topHabit?.name} (${maxStreak})`);
+    console.log(`[Dashboard] Top habit: ${topHabit ? topHabit.name : 'None'} (${maxStreak})`);
 
 
     // 3. Weekly Activity (Last 7 days)
@@ -174,7 +175,7 @@ export const getRunningStats = async (req, res) => {
     const targetMiles = 20;
 
     // 4. Days remaining
-    const daysLeft = Math.ceil((lastDayOfMonth - today) / (1000 * 60 * 60 * 24));
+    const daysLeft = Math.ceil((lastDayOfMonth.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
     res.json({
       found: true,
